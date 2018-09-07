@@ -1,0 +1,10 @@
+*.o
+*.a
+*.so
+*.d
+*.Tsymbols
+*.gcda
+*.gcno
+*~
+~*.~*
+
