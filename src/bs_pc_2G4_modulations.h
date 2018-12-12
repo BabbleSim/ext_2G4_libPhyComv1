@@ -12,12 +12,16 @@ extern "C"{
 
 #define P2G4_MOD_SIMILAR_MASK 0xFFF0
 /*
+ * If two modulations are the same after masking with P2G4_MOD_SIMILAR_MASK
+ * it means they are compatible (one can be received with the modem configured
+ * for the other) although probably with limited performance.
+ *
  * Note: All modems for this phy would need to understand these modulations
  * to be able to, at least, account for their interference.
- * To ease this process, modulations which have similar enough spectral
- * characteristics should have the same upper 12 bits.
- * In this manner a modem model can tell that an unknown modulation is close
- * to another known one and just treat it as if it were the same
+ * To ease this process, a modem model may treat several modulations equally
+ * if they share the P2G4_MOD_SIMILAR_MASK bits.
+ * In this manner a modem model can tell that an otherwise unknown modulation
+ * is close to another known one and just treat it as if it were the same
  */
 
 #define P2G4_MOD_BLE             0x10 //Standard 1Mbps BLE modulation
