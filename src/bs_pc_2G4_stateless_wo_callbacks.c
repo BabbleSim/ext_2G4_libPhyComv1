@@ -61,7 +61,7 @@ int p2G4_dev_req_tx_s_nc_b(p2G4_dev_state_nc_t *c2G4_dev_st, p2G4_tx_t *tx_s, ui
   c2G4_dev_st->tx_done_s = tx_done_s;
 
   if ( c2G4_dev_st->ongoing != Nothing_2G4 ) {
-    bs_trace_error_line("Tried to request a new tx while some other transaction was ongoing\n");
+    bs_trace_error_time_line("Tried to request a new tx while some other transaction was ongoing\n");
   }
 
   p2G4_dev_req_tx_i(&c2G4_dev_st->pb_dev_state, tx_s, packet);
@@ -82,7 +82,7 @@ int p2G4_dev_provide_new_tx_abort_s_nc_b(p2G4_dev_state_nc_t *c2G4_dev_st, p2G4_
   CHECK_CONNECTED(c2G4_dev_st->pb_dev_state.connected);
 
   if ( c2G4_dev_st->ongoing != Tx_Abort_Reeval_2G4 ) {
-    bs_trace_error_line("Tried to send a new Tx Abort substruct but we are not in a Tx transaction abort reevaluation!\n");
+    bs_trace_error_time_line("Tried to send a new Tx Abort substruct but we are not in a Tx transaction abort reevaluation!\n");
   }
 
   pb_send_msg(c2G4_dev_st->pb_dev_state.ff_dtp, P2G4_MSG_RERESP_ABORTREEVAL,
@@ -152,7 +152,7 @@ int p2G4_dev_rx_cont_after_addr_s_nc_b(p2G4_dev_state_nc_t *p2G4_dev_state, bool
   CHECK_CONNECTED(p2G4_dev_state->pb_dev_state.connected);
 
   if ( p2G4_dev_state->ongoing != Rx_Header_Eval_2G4 ) {
-    bs_trace_error_line("Tried to continue from an Rx Header eval, but we are not doing that now..\n");
+    bs_trace_error_time_line("Tried to continue from an Rx Header eval, but we are not doing that now..\n");
   }
   pc_header_t header;
 
@@ -187,7 +187,7 @@ int p2G4_dev_rx_cont_after_addr_s_nc_b(p2G4_dev_state_nc_t *p2G4_dev_state, bool
 int p2G4_dev_provide_new_rx_abort_s_nc_b(p2G4_dev_state_nc_t *p2G4_dev_state, p2G4_abort_t * abort){
   CHECK_CONNECTED(p2G4_dev_state->pb_dev_state.connected);
   if ( p2G4_dev_state->ongoing != Rx_Abort_Reeval_2G4 ) {
-    bs_trace_error_line("Tried to send a new Rx Abort substruct but we are not in a Rx transaction abort reevaluation!\n");
+    bs_trace_error_time_line("Tried to send a new Rx Abort substruct but we are not in a Rx transaction abort reevaluation!\n");
   }
   pc_header_t header;
 
@@ -224,7 +224,7 @@ int p2G4_dev_req_rx_s_nc_b(p2G4_dev_state_nc_t *p2G4_dev_state, p2G4_rx_t *rx_s,
   CHECK_CONNECTED(p2G4_dev_state->pb_dev_state.connected);
 
   if ( p2G4_dev_state->ongoing != Nothing_2G4 ) {
-    bs_trace_error_line("Tried to request a new Rx while another transaction was ongoing\n");
+    bs_trace_error_time_line("Tried to request a new Rx while another transaction was ongoing\n");
   }
 
   pb_send_msg(p2G4_dev_state->pb_dev_state.ff_dtp, P2G4_MSG_RX,
