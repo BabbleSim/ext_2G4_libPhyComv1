@@ -12,6 +12,8 @@ You can find the sequence diagrams here:
 [2G4 IPC sequence diagrams](2G4_libPhyComv1_protocol.svg)
 
 ![2G4 IPC sequence diagrams](./2G4_libPhyComv1_protocol.svg?sanitize=true)
+<!--The ?sanitize=true is an ugly thing for GitHub to enable the svg to be
+rendered into the markdown preview-->
 
 The content of these structures, which are sent between the devices and phy,
 can be found in [bs_pc_2G4_types.h](../src/bs_pc_2G4_types.h)
