@@ -1,0 +1,47 @@
+These are just development notes.
+
+* Some protocols/stacks will look into the data even before the packet is CRC'ed. This can be the case both for
+  the BLE header & the 802.15.4 "header" (actual phy payload).
+  Today the Phy provides an uncorrupted packet, so the device cannot directly behave like if it received the possibly corrupted one, and be fully correct.
+  Some protocols will check the header (in SW or HW), but also may have FEC in this headers.
+  
+  Today the options for the device are to either
+   * or to assume no errors while doing the ongiong packet parsing, and have a too good performance (only react to the CRC errors eventually discarding the payload)
+   * when the phy says that either the header or payload is corrupted, always assume the erros in the some places (say in the worst case place)
+   * or to do its own random draw to decide where exactly errors are.
+
+  Trying to model more precise different protocol options here would lead to be a very complex Phy state machine and protocol w devices
+
+  A more general solution would be the Phy providing to the device a bit error mask
+  as that would allow to generate the corrupted packet in the lowest layer of the device, and have it feed that to the radio models/stack.
+  The issue with such a solution though, is that as some stacks look into as much packet as possible on the fly, that would require this bitmask to be updated on the fly.
+  An option would be to allow the device to request an update to this bitmask during each abort reevaluation.
+  That is, a new IMMediate procedure, something like:
+    imm_req_error_mask:
+      byte_array_start_offset //just to save BW, how many bytes to chop from the array (that it already got before)
+    imm_resp_error_mask:
+      current instant
+      header_start //offset in bits in the array that marks the begining of the header, before that it would be preamble + address 
+      already calculated bit array lenght //how much is actually filled. (At the very least we will send full bytes)
+      bit array lenght //number of actual bytes that follow
+      error bit array itself[]
+
+* Model the lenght error, by asking the receiver until when will it wants to receive, and then maybe continuing after the tx end
+  specially interesting for errors in the code indicator (and also lenght errors)
+  Either in the initial Rx request, or after
+  For after maybe also with an immediate command just to set that length,
+  and a new structure after RXCONT in which the device can provide both this lenght, and a new abort structure.
+  forced_packet_duration was added in the Rx struct for this.
+
+* In piggybacking receptions, if the modulation or coding rate is incorrect, it should lose bits
+  The same should be done if the packet disapears.
+  Internally we should flag it first time it is detected, and then just lose bits afterwards until the end (otherwise if another packet is transmitted from the same tx we may mistake it as good)
+
+* Once the Tx is lost, today the Phy counts everything as errors.
+  It should instead have a 50% prob. of bit errors
+
+* Compatible modulations with different coding rates are not handled too well.
+  The receiver would sync but that would actually cause bit errors
+  for ex. 125 and 512 coded phy, or other similar coderate disparities.
+  The coding_rate was added in the Tx and Rx structures.
+  Logic shuold be implemented
