@@ -17,7 +17,7 @@
 extern "C" {
 #endif
 
-typedef enum {None, OnlyReceivable, OnlyNonReceivable} p2G4_mod_limits_t;
+typedef enum {Mod_None, OnlyReceivable, OnlyNonReceivable} p2G4_mod_limits_t;
 
 int p2G4_modulation_from_string(const char* name, p2G4_modulation_t *modulation, p2G4_mod_limits_t limit, int verb);
 
