@@ -100,6 +100,26 @@ int p2G4_dev_req_tx_s_c_b(p2G4_dev_state_s_t *p2G4_dev_state, p2G4_tx_t *tx_s, u
  * Request a transmissions to the phy
  *
  * returns -1 on error, 0 otherwise
+ */
+int p2G4_dev_req_txv2_s_c_b(p2G4_dev_state_s_t *p2G4_dev_state, p2G4_txv2_t *tx_s, uint8_t *packet, p2G4_tx_done_t *tx_done_s)
+{
+  CHECK_CONNECTED(p2G4_dev_state->pb_dev_state.connected);
+  int ret;
+  pc_header_t header;
+
+  p2G4_dev_req_txv2_i(&p2G4_dev_state->pb_dev_state, tx_s, packet);
+
+  header = get_resp_while_handling_abortreeval_s(p2G4_dev_state, &tx_s->abort);
+
+  ret = p2G4_dev_handle_tx_resp_i(&p2G4_dev_state->pb_dev_state, header,
+                                  tx_done_s);
+  return ret;
+}
+
+/**
+ * Request a transmissions to the phy
+ *
+ * returns -1 on error, 0 otherwise
  *
  * It does not wait for a response, p2G4_dev_pick_txresp_s_c_b() should be called after
  */
@@ -110,7 +130,21 @@ int p2G4_dev_req_tx_s_c(p2G4_dev_state_s_t *p2G4_dev_state, p2G4_tx_t *tx_s, uin
 }
 
 /**
+ * Request a transmissions to the phy
+ *
+ * returns -1 on error, 0 otherwise
+ *
+ * It does not wait for a response, p2G4_dev_pick_txresp_s_c_b() should be called after
+ */
+int p2G4_dev_req_txv2_s_c(p2G4_dev_state_s_t *p2G4_dev_state, p2G4_txv2_t *tx_s, uint8_t *packet) {
+  CHECK_CONNECTED(p2G4_dev_state->pb_dev_state.connected);
+  p2G4_dev_req_txv2_i(&p2G4_dev_state->pb_dev_state, tx_s, packet);
+  return 0;
+}
+
+/**
  * Pickup a tx response (This function is meant only for devices which use p2G4_dev_req_tx_s_c()
+ * or p2G4_dev_req_txv2_s_c()
  * Note that this function canNOT handle abort reevaluations.
  * (if those are expected they should have been handled before, or with a different function)
  *
@@ -123,7 +157,7 @@ int p2G4_dev_pick_txresp_s_c_b(p2G4_dev_state_s_t *p2G4_dev_state, p2G4_tx_done_
 }
 
 /**
- * Request a reception to the phy
+ * Request a (v1) reception to the phy
  *
  * rx_done_s needs to be allocated by the caller
  *
@@ -190,6 +224,82 @@ int p2G4_dev_req_rx_s_c_b(p2G4_dev_state_s_t *p2G4_dev_state, p2G4_rx_t *rx_s,
     return -1;
   } else if (r_header == P2G4_MSG_RX_END) {
     if (pb_dev_read(&p2G4_dev_state->pb_dev_state, rx_done_s, sizeof(p2G4_rx_done_t)) == -1) {
+      return -1;
+    }
+  } else {
+    INVALID_RESP(r_header);
+  }
+  return r_header;
+}
+
+/**
+ * Request a (v2) reception to the phy
+ *
+ * rx_done_s needs to be allocated by the caller
+ *
+ * rx_buf is a pointer to a buffer in which the packet will be copied.
+ * This buffer shall have buf_size bytes.
+ * If buf_size is 0, this function will allocate a new buffer and point
+ *  *rx_buf to it (the application must free it afterwards).
+ * Otherwise this function will fail if the buffer is too small to fit
+ * the incoming packet
+ *
+ * dev_rxeval_f is a function which will be called when receiving the packet.
+ * If the device will accept any packet (quite normal behavior), set this to
+ * NULL.
+ * dev_rxeval_f() shall return 1, if it accepts the packet, 0 otherwise
+ *
+ * returns -1 on error, the received response header >=0 otherwise
+ */
+int p2G4_dev_req_rxv2_s_c_b(p2G4_dev_state_s_t *p2G4_dev_state, p2G4_rxv2_t *rx_s,
+                          p2G4_rxv2_done_t *rx_done_s, uint8_t **rx_buf,
+                          size_t buf_size, device_eval_rxv2_f dev_rxeval_f) {
+
+  CHECK_CONNECTED(p2G4_dev_state->pb_dev_state.connected);
+
+  pb_send_msg(p2G4_dev_state->pb_dev_state.ff_dtp,
+              P2G4_MSG_RXV2, (void *)rx_s, sizeof(p2G4_rxv2_t));
+
+  pc_header_t r_header;
+  r_header = get_resp_while_handling_abortreeval_s(p2G4_dev_state, &rx_s->abort);
+
+  if (r_header == P2G4_MSG_RX_ADDRESSFOUND) {
+    int ret;
+
+    ret = pb_dev_read(&p2G4_dev_state->pb_dev_state,
+                      rx_done_s, sizeof(p2G4_rx_done_t));
+    if (ret == -1)
+      return -1;
+
+    ret = p2G4_rx_pick_packet(&p2G4_dev_state->pb_dev_state,
+                              rx_done_s->packet_size, rx_buf, buf_size);
+    if (ret)
+      return ret;
+
+    int accept_packet = true;
+    if (dev_rxeval_f != NULL) {
+      accept_packet = dev_rxeval_f(rx_done_s, *rx_buf);
+    }
+    pc_header_t header;
+    if (accept_packet == true) {
+      header = P2G4_MSG_RXCONT;
+    } else {
+      header = P2G4_MSG_RXSTOP;
+    }
+    write(p2G4_dev_state->pb_dev_state.ff_dtp, &header, sizeof(header));
+
+    if (accept_packet != true) {
+      return r_header;
+    }
+
+    r_header = get_resp_while_handling_abortreeval_s(p2G4_dev_state, &rx_s->abort);
+  }
+
+  if (r_header == PB_MSG_DISCONNECT) {
+    pb_dev_clean_up(&p2G4_dev_state->pb_dev_state);
+    return -1;
+  } else if (r_header == P2G4_MSG_RXV2_END) {
+    if (pb_dev_read(&p2G4_dev_state->pb_dev_state, rx_done_s, sizeof(p2G4_rxv2_done_t)) == -1) {
       return -1;
     }
   } else {

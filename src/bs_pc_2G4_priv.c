@@ -18,6 +18,13 @@ void p2G4_dev_req_tx_i(pb_dev_state_t *pb_dev_state, p2G4_tx_t *s,
   pb_send_payload(pb_dev_state->ff_dtp, buf, s->packet_size);
 }
 
+void p2G4_dev_req_txv2_i(pb_dev_state_t *pb_dev_state, p2G4_txv2_t *s,
+                       uint8_t *buf)
+{
+  pb_send_msg(pb_dev_state->ff_dtp, P2G4_MSG_TXV2, (void *)s, sizeof(p2G4_txv2_t));
+  pb_send_payload(pb_dev_state->ff_dtp, buf, s->packet_size);
+}
+
 int p2G4_dev_handle_tx_resp_i(pb_dev_state_t *pb_dev_state, pc_header_t header,
                               p2G4_tx_done_t *tx_done_s)
 {
@@ -37,6 +44,11 @@ int p2G4_dev_handle_tx_resp_i(pb_dev_state_t *pb_dev_state, pc_header_t header,
   }
 }
 
+void p2G4_dev_req_cca_i(pb_dev_state_t *pb_dev_state, p2G4_cca_t *s)
+{
+  pb_send_msg(pb_dev_state->ff_dtp, P2G4_MSG_CCA_MEAS, (void *)s, sizeof(p2G4_cca_t));
+}
+
 int p2G4_dev_get_tx_resp_i(pb_dev_state_t *pb_dev_state,
                            p2G4_tx_done_t *tx_done_s)
 {
@@ -50,6 +62,25 @@ int p2G4_dev_get_tx_resp_i(pb_dev_state_t *pb_dev_state,
   ret = p2G4_dev_handle_tx_resp_i(pb_dev_state, header,
                                   tx_done_s);
   return ret;
+}
+
+int p2G4_dev_handle_cca_resp_i(pb_dev_state_t *pb_dev_state, pc_header_t header,
+                              p2G4_cca_done_t *cca_done_s)
+{
+  int ret;
+  if (header == P2G4_MSG_CCA_END) {
+    ret = pb_dev_read(pb_dev_state, cca_done_s, sizeof(p2G4_cca_done_t));
+    if (ret == -1)
+      return -1;
+    else
+      return 0;
+  } else if (header == PB_MSG_DISCONNECT) {
+    pb_dev_clean_up(pb_dev_state);
+    return -1;
+  } else {
+    INVALID_RESP(header);
+    return -1;
+  }
 }
 
 int p2G4_dev_get_rssi_resp_i(pb_dev_state_t *pb_dev_state,
