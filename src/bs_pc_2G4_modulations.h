@@ -29,6 +29,7 @@ extern "C"{
 #define P2G4_MOD_PROP2M          0x21 //Proprietary 2Mbps
 #define P2G4_MOD_PROP3M          0x31 //Proprietary 3Mbps
 #define P2G4_MOD_PROP4M          0x41 //Proprietary 4Mbps
+#define P2G4_MOD_154_250K_DSS   0x100 //IEEE 802.15.4-2006 DSS 250kbps O-QPSK PHY
 
 /* Non receivable modulations (interferers) */
 #define P2G4_MOD_BLEINTER        0x8000  //BLE shaped interference
