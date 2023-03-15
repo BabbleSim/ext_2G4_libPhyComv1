@@ -94,7 +94,7 @@ int p2G4_dev_provide_new_tx_abort_nc_b(p2G4_abort_t * abort);
 int p2G4_dev_req_rx_nc_b(p2G4_rx_t *rx_s, p2G4_rx_done_t *rx_done_s, uint8_t **rx_buf, size_t buf_size);
 int p2G4_dev_req_rxv2_nc_b(p2G4_rxv2_t *rx_s, p2G4_address_t *phy_addr, p2G4_rxv2_done_t *rx_done_s, uint8_t **buf, size_t size);
 int p2G4_dev_rx_cont_after_addr_nc_b(bool accept);
-int p2G4_dev_rxv2_cont_after_addr_nc_b(bool accept_rx);
+int p2G4_dev_rxv2_cont_after_addr_nc_b(bool accept_rx, p2G4_abort_t *abort);
 int p2G4_dev_provide_new_rx_abort_nc_b(p2G4_abort_t * abort);
 int p2G4_dev_provide_new_rxv2_abort_nc_b(p2G4_abort_t * abort);
 int p2G4_dev_req_RSSI_nc_b(p2G4_rssi_t *RSSI_s, p2G4_rssi_done_t *RSSI_done_s);
@@ -131,7 +131,7 @@ int p2G4_dev_provide_new_cca_abort_s_nc_b(p2G4_dev_state_nc_t *c2G4_dev_st, p2G4
 int p2G4_dev_req_rx_s_nc_b(p2G4_dev_state_nc_t *p2G4_dev_st, p2G4_rx_t *rx_s, p2G4_rx_done_t *rx_done_s, uint8_t **rx_buf, size_t bus_size);
 int p2G4_dev_req_rxv2_s_nc_b(p2G4_dev_state_nc_t *p2G4_dev_state, p2G4_rxv2_t *rx_s, p2G4_address_t *phy_addr, p2G4_rxv2_done_t *rx_done_s, uint8_t **rx_buf, size_t buf_size);
 int p2G4_dev_rx_cont_after_addr_s_nc_b(p2G4_dev_state_nc_t *p2G4_dev_st, bool accept);
-int p2G4_dev_rxv2_cont_after_addr_s_nc_b(p2G4_dev_state_nc_t *p2G4_dev_state, bool dev_accepts);
+int p2G4_dev_rxv2_cont_after_addr_s_nc_b(p2G4_dev_state_nc_t *p2G4_dev_state, bool dev_accepts, p2G4_abort_t * abort);
 int p2G4_dev_provide_new_rx_abort_s_nc_b(p2G4_dev_state_nc_t *p2G4_dev_st, p2G4_abort_t * abort);
 int p2G4_dev_provide_new_rxv2_abort_s_nc_b(p2G4_dev_state_nc_t *p2G4_dev_state, p2G4_abort_t * abort);
 int p2G4_dev_req_RSSI_s_nc_b(p2G4_dev_state_nc_t *p2G4_dev_st, p2G4_rssi_t *RSSI_s, p2G4_rssi_done_t *RSSI_done_s);

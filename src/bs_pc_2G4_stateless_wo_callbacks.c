@@ -309,7 +309,9 @@ int p2G4_dev_rx_cont_after_addr_s_nc_b(p2G4_dev_state_nc_t *p2G4_dev_state, bool
 
 /**
  * Continue reception (v2) after an address evaluation request
+ * providing an updated abort substructure
  *  bool dev_accepts defines if the device accepts the packet or not
+ *  p2G4_abort_t * abort new abort parameters (don't care if dev_accepts == false)
  *
  * if dev_accepts is false, the reception ends and this function returns 0
  * otherwise, the function will eventually return
@@ -319,7 +321,7 @@ int p2G4_dev_rx_cont_after_addr_s_nc_b(p2G4_dev_state_nc_t *p2G4_dev_state, bool
  * Note that the response structures will come thru the pointers which
  * were provided with the call which initiated the transaction
  */
-int p2G4_dev_rxv2_cont_after_addr_s_nc_b(p2G4_dev_state_nc_t *p2G4_dev_state, bool dev_accepts){
+int p2G4_dev_rxv2_cont_after_addr_s_nc_b(p2G4_dev_state_nc_t *p2G4_dev_state, bool dev_accepts, p2G4_abort_t * abort){
   CHECK_CONNECTED(p2G4_dev_state->pb_dev_state.connected);
 
   if ( p2G4_dev_state->ongoing != Rx_Header_Eval_2G4 ) {
@@ -328,11 +330,13 @@ int p2G4_dev_rxv2_cont_after_addr_s_nc_b(p2G4_dev_state_nc_t *p2G4_dev_state, bo
   pc_header_t header;
 
   if (dev_accepts) {
-    header = P2G4_MSG_RXCONT;
+    header = P2G4_MSG_RXV2CONT;
+    write(p2G4_dev_state->pb_dev_state.ff_dtp, &header, sizeof(header));
+    write(p2G4_dev_state->pb_dev_state.ff_dtp, abort, sizeof(p2G4_abort_t));
   } else {
     header = P2G4_MSG_RXSTOP;
+    write(p2G4_dev_state->pb_dev_state.ff_dtp, &header, sizeof(header));
   }
-  write(p2G4_dev_state->pb_dev_state.ff_dtp, &header, sizeof(header));
 
   if (!dev_accepts) {
     p2G4_dev_state->ongoing = Nothing_2G4;

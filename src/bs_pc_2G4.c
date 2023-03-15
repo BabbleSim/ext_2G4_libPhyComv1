@@ -86,8 +86,8 @@ int p2G4_dev_rx_cont_after_addr_nc_b(bool accept_rx){
   return p2G4_dev_rx_cont_after_addr_s_nc_b(&C2G4_dev_st_nc, accept_rx);
 }
 
-int p2G4_dev_rxv2_cont_after_addr_nc_b(bool accept_rx){
-  return p2G4_dev_rxv2_cont_after_addr_s_nc_b(&C2G4_dev_st_nc, accept_rx);
+int p2G4_dev_rxv2_cont_after_addr_nc_b(bool accept_rx, p2G4_abort_t *abort){
+  return p2G4_dev_rxv2_cont_after_addr_s_nc_b(&C2G4_dev_st_nc, accept_rx, abort);
 }
 
 int p2G4_dev_provide_new_rx_abort_nc_b(p2G4_abort_t * abort){

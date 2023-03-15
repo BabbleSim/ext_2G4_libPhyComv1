@@ -456,6 +456,9 @@ typedef struct __attribute__ ((packed)) {
 #define P2G4_MSG_RSSIMEAS       0x14
 /* Device is successfully providing a new p2G4_abort_t */
 #define P2G4_MSG_RERESP_ABORTREEVAL 0x15
+/* Continue receiving (the device likes the address and headers of the packet, and it provides an updated abort substructure) */
+#define P2G4_MSG_RXV2CONT       0x16
+
 
 /* The device will transmit (updated/v2 Tx API) */
 #define P2G4_MSG_TXV2           0x22
