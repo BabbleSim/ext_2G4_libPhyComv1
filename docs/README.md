@@ -40,7 +40,7 @@ A p2G4_rxv2_t structure from the device is followed by a p2G4_rxv2_addr_t,
 containing p2G4_rxv2_t.n_addr elements.
 
 When p2G4_rxv2_t.resp_type = 0, the Phy responds with a p2G4_rx_done_t,
-and dependending on status, a bytearray of p2G4_rx_done_t.packet_size bytes
+and depending on status, a bytearray of p2G4_rx_done_t.packet_size bytes
 with the possibly received packet.
 
 #### RSSI measurements during abort reevaluations
@@ -50,8 +50,8 @@ measurement (and follow it with another abort structure)
 
 #### CCA procedure
 To better support systems with CCA, a new API is introduced.
-The device may do a seach for compabile modulations and/or an (average) energy
-measument.
+The device may do a search for compatible modulations and/or an (average) energy
+measurement.
 This is done periodically by looking for a compatible transmitter
 and simultaneously measuring the RRSI level.
 The device may also select to stop the measurement as soon as either the RSSI
@@ -61,7 +61,7 @@ another threshold and a compatible modulation is found in the air.
 #### Coded Phy and other multi-modulation and/or multi-payload packets
 Coded Phy packets shall be handled as two back to back transmissions.
 Where the 1st transmission covers the {preamble + address + CI + term}
-and the 2nd transmissions covers the {training sequence + header + CRC}.
+and the 2nd transmissions covers the {PDU (header + payload + ..) + header + CRC}.
 For each consecutive transmission the following must be true:
 
 * {1st tx}.end_tx_time = {1st tx}.end_packet_time
@@ -73,7 +73,7 @@ Where the 1st reception will attempt to receive only the 1st transmission,
 and the 2nd reception must be configured with prelocked_tx set to true.
 In this case, the receiver will continue automatically with the same
 transmitter it sync'ed to last time.
-It is the responsability of the device to properly set the modulation of the
+It is the responsibility of the device to properly set the modulation of the
 2nd reception to match the transmitter 2nd transmission.
 
 For coded phy, the 2nd/piggybacking Rx pream_and_addr_duration should be set to

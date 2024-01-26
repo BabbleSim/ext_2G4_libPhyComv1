@@ -6,7 +6,7 @@ These are just development notes.
   Some protocols will check the header (in SW or HW), but also may have FEC in this headers.
   
   Today the options for the device are to either
-   * or to assume no errors while doing the ongiong packet parsing, and have a too good performance (only react to the CRC errors eventually discarding the payload)
+   * or to assume no errors while doing the ongoing packet parsing, and have a too good performance (only react to the CRC errors eventually discarding the payload)
    * when the phy says that either the header or payload is corrupted, always assume the erros in the some places (say in the worst case place)
    * or to do its own random draw to decide where exactly errors are.
 
@@ -21,20 +21,20 @@ These are just development notes.
       byte_array_start_offset //just to save BW, how many bytes to chop from the array (that it already got before)
     imm_resp_error_mask:
       current instant
-      header_start //offset in bits in the array that marks the begining of the header, before that it would be preamble + address 
-      already calculated bit array lenght //how much is actually filled. (At the very least we will send full bytes)
-      bit array lenght //number of actual bytes that follow
+      header_start //offset in bits in the array that marks the beginning of the header, before that it would be preamble + address
+      already calculated bit array length //how much is actually filled. (At the very least we will send full bytes)
+      bit array length //number of actual bytes that follow
       error bit array itself[]
 
-* Model the lenght error, by asking the receiver until when will it wants to receive, and then maybe continuing after the tx end
-  specially interesting for errors in the code indicator (and also lenght errors)
+* Model the length error, by asking the receiver until when will it wants to receive, and then maybe continuing after the tx end
+  specially interesting for errors in the code indicator (and also length errors)
   Either in the initial Rx request, or after
   For after maybe also with an immediate command just to set that length,
-  and a new structure after RXCONT in which the device can provide both this lenght, and a new abort structure.
+  and a new structure after RXCONT in which the device can provide both this length, and a new abort structure.
   forced_packet_duration was added in the Rx struct for this.
 
 * In piggybacking receptions, if the modulation or coding rate is incorrect, it should lose bits
-  The same should be done if the packet disapears.
+  The same should be done if the packet disappears.
   Internally we should flag it first time it is detected, and then just lose bits afterwards until the end (otherwise if another packet is transmitted from the same tx we may mistake it as good)
 
 * Once the Tx is lost, today the Phy counts everything as errors.
@@ -44,4 +44,4 @@ These are just development notes.
   The receiver would sync but that would actually cause bit errors
   for ex. 125 and 512 coded phy, or other similar coderate disparities.
   The coding_rate was added in the Tx and Rx structures.
-  Logic shuold be implemented
+  Logic should be implemented
