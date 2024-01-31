@@ -258,8 +258,8 @@ typedef struct __attribute__ ((packed)) {
   /* Duration of the packet the receiver will listen for.
    * That is, for how long the receiver will be receiving bits,
    * instead of during Tx.start_packet_time -> Tx.end_packet_time
-   * The receiver will think the packet lasts Tx.start_packet_time -> (Tx.start_packet_time+forced_packet_duration)
-   * A value of UINT32_MAX means it follows the Tx packet duration.
+   * The receiver will think the packet lasts Tx.start_packet_time -> (Tx.start_packet_time+forced_packet_duration-1)
+   * A value of UINT32_MAX or 0 means it follows the Tx packet duration.
    * Note: This is not a filter, but a way to model receivers mistakenly
    * decoding the length or code/rate indication fields.
    */
@@ -279,7 +279,10 @@ typedef struct __attribute__ ((packed)) {
   p2G4_power_t antenna_gain;
 
   /* (if coded) Which coding rate, the data is received with
-   * Note that this is only used for a == or != check.*/
+   * Note that this is only used for a == or != check. And that when set
+   * different than for the transmitter, the BER will be 50%
+   * For BLE CodedPhy, this should be set to 2 or 8 for S=2 and S=8 respectively
+   */
   uint16_t coding_rate;
 
   /* Packet parameters: */
@@ -319,16 +322,18 @@ typedef struct __attribute__ ((packed)) {
    * When set to 1, the Rx is already pre-locked.
    * In that case, the Rx will not search for a transmitter but continue receiving from the last
    * transmitter that it just was.
-   * The receiver will go directly to sync mode
+   * The receiver will go directly to sync mode.
    *
    * Note that in this case :
    *   * scan_duration should be set to pream_and_addr_duration + 1.
    *   * acceptable_pre_truncation should be set to 0
    *   * it may fail during sync depending on the sync_threshold and/or the transmitter disappearing.
    *     even if pream_and_addr_duration == 0 (an instantaneous check will be performed still).
-   *     So if you do not want this to happen set sync_threshold high enough (for ex. UINT16_MAX)
+   *     You can avoid this from happening for bit errors by setting sync_threshold high enough (for ex. UINT16_MAX)
    *   * Similarly it may fail during the header reception just like with a normal packet.
    *   * Any given phy_addr[] will be ignored.
+   *
+   * Note: prelocked_tx when the previous reception failed to sync leads to undefined behaviour
    */
   uint8_t prelocked_tx;
 
