@@ -32,16 +32,3 @@ These are just development notes.
   For after maybe also with an immediate command just to set that length,
   and a new structure after RXCONT in which the device can provide both this length, and a new abort structure.
   forced_packet_duration was added in the Rx struct for this.
-
-* In piggybacking receptions, if the modulation or coding rate is incorrect, it should lose bits
-  The same should be done if the packet disappears.
-  Internally we should flag it first time it is detected, and then just lose bits afterwards until the end (otherwise if another packet is transmitted from the same tx we may mistake it as good)
-
-* Once the Tx is lost, today the Phy counts everything as errors.
-  It should instead have a 50% prob. of bit errors
-
-* Compatible modulations with different coding rates are not handled too well.
-  The receiver would sync but that would actually cause bit errors
-  for ex. 125 and 512 coded phy, or other similar coderate disparities.
-  The coding_rate was added in the Tx and Rx structures.
-  Logic should be implemented
