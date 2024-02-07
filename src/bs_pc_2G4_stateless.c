@@ -1,5 +1,6 @@
 /*
  * Copyright 2018 Oticon A/S
+ * Copyright 2024 Nordic Semiconductor ASA
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -252,6 +253,7 @@ int p2G4_dev_req_rx_s_c_b(p2G4_dev_state_s_t *p2G4_dev_state, p2G4_rx_t *rx_s,
  * returns -1 on error, the received response header >=0 otherwise
  */
 int p2G4_dev_req_rxv2_s_c_b(p2G4_dev_state_s_t *p2G4_dev_state, p2G4_rxv2_t *rx_s,
+                          p2G4_address_t *phy_addr,
                           p2G4_rxv2_done_t *rx_done_s, uint8_t **rx_buf,
                           size_t buf_size, device_eval_rxv2_f dev_rxeval_f) {
 
@@ -259,15 +261,18 @@ int p2G4_dev_req_rxv2_s_c_b(p2G4_dev_state_s_t *p2G4_dev_state, p2G4_rxv2_t *rx_
 
   pb_send_msg(p2G4_dev_state->pb_dev_state.ff_dtp,
               P2G4_MSG_RXV2, (void *)rx_s, sizeof(p2G4_rxv2_t));
+  if (rx_s->n_addr > 0) {
+    write(p2G4_dev_state->pb_dev_state.ff_dtp, phy_addr, sizeof(p2G4_address_t)*rx_s->n_addr);
+  }
 
   pc_header_t r_header;
   r_header = get_resp_while_handling_abortreeval_s(p2G4_dev_state, &rx_s->abort);
 
-  if (r_header == P2G4_MSG_RX_ADDRESSFOUND) {
+  if (r_header == P2G4_MSG_RXV2_ADDRESSFOUND) {
     int ret;
 
     ret = pb_dev_read(&p2G4_dev_state->pb_dev_state,
-                      rx_done_s, sizeof(p2G4_rx_done_t));
+                      rx_done_s, sizeof(p2G4_rxv2_done_t));
     if (ret == -1)
       return -1;
 
@@ -321,6 +326,23 @@ int p2G4_dev_req_RSSI_s_c_b(p2G4_dev_state_s_t *p2G4_dev_state,
   pb_send_msg(p2G4_dev_state->pb_dev_state.ff_dtp,
               P2G4_MSG_RSSIMEAS, (void *)RSSI_s, sizeof(p2G4_rssi_t));
   return p2G4_dev_get_rssi_resp_i(&p2G4_dev_state->pb_dev_state, RSSI_done_s);
+}
+
+/**
+ * Request a CCA measurement to the phy
+ * cca_done_s needs to be allocated by the caller
+ *
+ * returns -1 if disconnected, 0 otherwise
+ */
+int p2G4_dev_req_cca_s_c_b(p2G4_dev_state_s_t *p2G4_dev_state, p2G4_cca_t *cca_s, p2G4_cca_done_t *cca_done_s)
+{
+  CHECK_CONNECTED(p2G4_dev_state->pb_dev_state.connected);
+  p2G4_dev_req_cca_i(&p2G4_dev_state->pb_dev_state, cca_s);
+
+  pc_header_t r_header;
+  r_header = get_resp_while_handling_abortreeval_s(p2G4_dev_state, &cca_s->abort);
+
+  return p2G4_dev_handle_cca_resp_i(&p2G4_dev_state->pb_dev_state, r_header, cca_done_s);
 }
 
 /**

@@ -78,8 +78,12 @@ typedef int (*device_eval_rxv2_f)(p2G4_rxv2_done_t* rx_done, uint8_t *buff);
 
 int p2G4_dev_initcom_c(uint d, const char* s, const char* p, dev_abort_reeval_f abort_f);
 int p2G4_dev_req_rx_c_b(p2G4_rx_t *rx_s, p2G4_rx_done_t *rx_done_s, uint8_t **rx_buf, size_t buf_size, device_eval_rx_f fptr);
+int p2G4_dev_req_rxv2_c_b(p2G4_rxv2_t *rx_s, p2G4_address_t *phy_addr, p2G4_rxv2_done_t *rx_done_s, uint8_t **buf, size_t size,
+                          device_eval_rxv2_f eval_f);
 int p2G4_dev_req_RSSI_c_b(p2G4_rssi_t *RSSI_s, p2G4_rssi_done_t *RSSI_done_s);
+int p2G4_dev_req_cca_c_b(p2G4_cca_t *cca_s, p2G4_cca_done_t *cca_done_s);
 int p2G4_dev_req_tx_c_b(p2G4_tx_t *tx_s, uint8_t *buf, p2G4_tx_done_t *tx_done_s);
+int p2G4_dev_req_txv2_c_b(p2G4_txv2_t *tx_s, uint8_t *packet, p2G4_tx_done_t *tx_done_s);
 int p2G4_dev_req_wait_c_b(pb_wait_t *wait_s);
 void p2G4_dev_disconnect_c();
 void p2G4_dev_terminate_c();
@@ -150,11 +154,13 @@ typedef struct {
 
 int p2G4_dev_initcom_s_c(p2G4_dev_state_s_t *p2G4_dev_st, uint d, const char* s, const char* p, dev_abort_reeval_f fptr);
 int p2G4_dev_req_tx_s_c_b(p2G4_dev_state_s_t *p2G4_dev_st, p2G4_tx_t *tx_s, uint8_t *buf, p2G4_tx_done_t *tx_done_s);
+int p2G4_dev_req_txv2_s_c_b(p2G4_dev_state_s_t *p2G4_dev_state, p2G4_txv2_t *tx_s, uint8_t *packet, p2G4_tx_done_t *tx_done_s);
 int p2G4_dev_req_tx_s_c(p2G4_dev_state_s_t *p2G4_dev_st, p2G4_tx_t *tx_s, uint8_t *buf);
 int p2G4_dev_pick_txresp_s_c_b(p2G4_dev_state_s_t *p2G4_dev_st, p2G4_tx_done_t *tx_done_s);
 int p2G4_dev_req_rx_s_c_b(p2G4_dev_state_s_t *p2G4_dev_st, p2G4_rx_t *rx_s, p2G4_rx_done_t *rx_done_s, uint8_t **rx_buf, size_t buf_size, device_eval_rx_f fptr);
-int p2G4_dev_req_rxv2_s_c_b(p2G4_dev_state_s_t *p2G4_dev_state, p2G4_rxv2_t *rx_s, p2G4_rxv2_done_t *rx_done_s, uint8_t **rx_buf, size_t buf_size, device_eval_rxv2_f dev_rxeval_f);
+int p2G4_dev_req_rxv2_s_c_b(p2G4_dev_state_s_t *p2G4_dev_state, p2G4_rxv2_t *rx_s, p2G4_address_t *phy_addr, p2G4_rxv2_done_t *rx_done_s, uint8_t **rx_buf, size_t buf_size, device_eval_rxv2_f dev_rxeval_f);
 int p2G4_dev_req_RSSI_s_c_b(p2G4_dev_state_s_t *p2G4_dev_st, p2G4_rssi_t *RSSI_s, p2G4_rssi_done_t *RSSI_done_s);
+int p2G4_dev_req_cca_s_c_b(p2G4_dev_state_s_t *p2G4_dev_state, p2G4_cca_t *cca_s, p2G4_cca_done_t *cca_done_s);
 int p2G4_dev_req_wait_s_c_b(p2G4_dev_state_s_t *p2G4_dev_st, pb_wait_t *wait_s);
 int p2G4_dev_req_wait_s_c(p2G4_dev_state_s_t *p2G4_dev_st, pb_wait_t *wait_s);
 int p2G4_dev_pick_wait_resp_s_c_b(p2G4_dev_state_s_t *p2G4_dev_st);
