@@ -252,7 +252,8 @@ typedef struct __attribute__ ((packed)) {
   /* Time in which we need to get a preamble + address match before giving up
    * Once we get a preamble + address match we will continue to receive the
    * whole packet, unless there is a header error.
-   * We scan in the range [ start_time,  start_time + scan_duration - 1] us */
+   * We scan in the range [ start_time,  start_time + scan_duration - 1] us, unless
+   * scan_duration == UINT32_MAX, in which case the scan does not end (until aborted) */
   uint32_t scan_duration;
 
   /* Duration of the packet the receiver will listen for.
