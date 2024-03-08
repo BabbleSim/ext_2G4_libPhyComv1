@@ -73,12 +73,18 @@ Where the 1st reception will attempt to receive only the 1st transmission,
 and the 2nd reception must be configured with prelocked_tx set to true.
 In this case, the receiver will continue automatically with the same
 transmitter it sync'ed to last time.
-It is the responsibility of the device to properly set the modulation of the
+It is the responsibility of the device to properly set the coding_rate of the
 2nd reception to match the transmitter 2nd transmission.
 
-For coded phy, the 2nd/piggybacking Rx pream_and_addr_duration should be set to
-0, acceptable_pre_truncation = 0, scan_duration = 1,
-sync_threshold = UINT16_MAX.
+The first transmission payload shall contain at least 1 byte, in which the
+lowest 2 bits are the CI.
+The FEC2 transmission address should be an invalid one (for ex. 0x0), to ensure
+no other Receiver matches it as if it were a FEC1.
+The FEC2 reception:
+ * should be set to be piggybacking, and should preferably have n_addr = 0
+   (to ensure nothing else is locked if the Tx FEC2 disapears).
+ * pream_and_addr_duration should be set to 0, acceptable_pre_truncation = 0, scan_duration = 1,
+   sync_threshold = UINT16_MAX.
 
 This can be expanded to any number of sub-payloads with the same or different
 modulations.
