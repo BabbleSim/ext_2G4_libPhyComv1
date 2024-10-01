@@ -96,7 +96,7 @@ int p2G4_dev_get_rssi_resp_i(pb_dev_state_t *pb_dev_state,
   if (header == PB_MSG_DISCONNECT) {
     pb_dev_clean_up(pb_dev_state);
     return -1;
-  } else if (header == P2G4_MSG_RSSI_END) {
+  } else if ((header == P2G4_MSG_RSSI_END) || (header == P2G4_MSG_IMMRSSI_RRSI_DONE)) {
     ret = pb_dev_read(pb_dev_state, RSSI_done_s, sizeof(p2G4_rssi_done_t));
     if (ret == -1)
       return -1;

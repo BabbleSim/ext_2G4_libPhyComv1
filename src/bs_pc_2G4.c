@@ -110,6 +110,11 @@ int p2G4_dev_provide_new_rx_abort_nc_b(p2G4_abort_t * abort){
 int p2G4_dev_provide_new_rxv2_abort_nc_b(p2G4_abort_t * abort){
   return p2G4_dev_provide_new_rxv2_abort_s_nc_b(&C2G4_dev_st_nc, abort);
 }
+
+int p2G4_dev_req_imm_RSSI_nc_b(p2G4_rssi_t *RSSI_s, p2G4_rssi_done_t *RSSI_done_s){
+  return p2G4_dev_req_imm_RSSI_s_nc_b(&C2G4_dev_st_nc, RSSI_s, RSSI_done_s);
+}
+
 int p2G4_dev_req_RSSI_nc_b(p2G4_rssi_t *RSSI_s, p2G4_rssi_done_t *RSSI_done_s) {
   return p2G4_dev_req_RSSI_s_nc_b(&C2G4_dev_st_nc, RSSI_s, RSSI_done_s);
 }

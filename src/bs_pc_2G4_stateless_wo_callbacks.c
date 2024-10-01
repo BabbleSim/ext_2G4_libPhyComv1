@@ -403,6 +403,26 @@ int p2G4_dev_provide_new_rxv2_abort_s_nc_b(p2G4_dev_state_nc_t *p2G4_dev_state, 
   return c2G4_handle_rxv2_responses_s_nc(p2G4_dev_state, header);
 }
 
+/**
+ * During a Rx abort reevaluation, request an immediate RSSI measurement
+ *
+ * returns -1 on error, 0 otherwise
+ */
+int p2G4_dev_req_imm_RSSI_s_nc_b(p2G4_dev_state_nc_t *p2G4_dev_st, p2G4_rssi_t *RSSI_s, p2G4_rssi_done_t *RSSI_done_s) {
+  CHECK_CONNECTED(p2G4_dev_st->pb_dev_state.connected);
+  if ( p2G4_dev_st->ongoing != Rx_Abort_Reeval_2G4 ) {
+    bs_trace_error_time_line("Tried to send a new Rx RSSI immediate request but we are not in a Rx transaction abort reevaluation!\n");
+  }
+  pb_send_msg(p2G4_dev_st->pb_dev_state.ff_dtp,
+              P2G4_MSG_RERESP_IMMRSSI, (void *)RSSI_s,  sizeof(p2G4_rssi_t));
+  return p2G4_dev_get_rssi_resp_i(&p2G4_dev_st->pb_dev_state, RSSI_done_s);
+}
+
+/**
+ * Request a RSSI measurement from the Phy
+ *
+ * returns -1 if disconnected, 0 otherwise
+ */
 int p2G4_dev_req_RSSI_s_nc_b(p2G4_dev_state_nc_t *p2G4_dev_st, p2G4_rssi_t *RSSI_s, p2G4_rssi_done_t *RSSI_done_s){
   CHECK_CONNECTED(p2G4_dev_st->pb_dev_state.connected);
   pb_send_msg(p2G4_dev_st->pb_dev_state.ff_dtp,
