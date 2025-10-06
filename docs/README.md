@@ -19,24 +19,28 @@ rendered into the markdown preview-->
 The content of these structures, which are sent between the devices and phy,
 can be found in [bs_pc_2G4_types.h](../src/bs_pc_2G4_types.h)
 
-### v2 API Updates
+### v2.1 API Updates
 
 Note: The old API is still supported, and remains ABI compatible
-The v2 API is a superset of the old API aiming at providing support for
+The v2.1 API is a superset of the old API aiming at providing support for
 different protocols, and more features.
 
 If desired, devices which supported the old API can be mapped to the new API
 without loss of functionality (see instructions on each structure in the header
 file).
 
-#### Txv2:
-A p2G4_txv2_t structure from the device, is followed by a byte array of
+#### Txv2.1:
+A p2G4_tx2v1_t structure from the device, is followed by a byte array of
 packet_size bytes.
-A p2G4_txv2_t is followed by a p2G4_tx_done_t from the Phy.
+A p2G4_tx2v1_t is followed by a p2G4_tx_done_t from the Phy.
 
-#### Rxv2:
-A p2G4_rxv2_t structure from the device is followed by a p2G4_rxv2_addr_t,
-containing p2G4_rxv2_t.n_addr elements.
+#### RSSIv2:
+A p2G4_rssiv2_t structure from the device, which gets as response from the Phy
+a p2G4_rssi_done_t.
+
+#### Rxv2.1:
+A p2G4_rx2v1_t structure from the device is followed by a p2G4_rxv2_addr_t,
+containing p2G4_rx2v1_t.n_addr elements.
 
 When p2G4_rxv2_t.resp_type = 0, the Phy responds with a p2G4_rx_done_t,
 and depending on status, a bytearray of p2G4_rx_done_t.packet_size bytes
@@ -140,7 +144,7 @@ For HDT, packets shall be transmitted as follows:
 
 TODO: Make drawing for format 1 with phy interval in the middle of the block, just at the end and no phyint.
 
-HDT is only supported in v2 Tx and Rx APIs
+HDT is only supported in >=v2 Tx and Rx APIs
 
 ## API
 
