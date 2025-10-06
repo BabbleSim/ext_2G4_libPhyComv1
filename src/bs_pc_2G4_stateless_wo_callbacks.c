@@ -118,6 +118,32 @@ int p2G4_dev_req_txv2_s_nc_b(p2G4_dev_state_nc_t *c2G4_dev_st, p2G4_txv2_t *tx_s
 }
 
 /**
+ * Request a transmissions (v2.1) to the phy
+ *
+ * tx_done_s needs to point to an allocated structure. Its content will be overwritten
+ *
+ * returns -1 on error, otherwise the response from the phy.
+ * Possible phy responses are:
+ *   * P2G4_MSG_TX_END : (updates the tx_done_s)
+ *        The transaction has terminated, the device may start a new transaction
+ *   * P2G4_MSG_ABORTREEVAL
+ *        The device shall call p2G4_dev_provide_new_tx_abort_s_nc_b() with a new abort structure
+ */
+int p2G4_dev_req_tx2v1_s_nc_b(p2G4_dev_state_nc_t *c2G4_dev_st, p2G4_tx2v1_t *tx_s, uint8_t *packet, p2G4_tx_done_t *tx_done_s) {
+
+  CHECK_CONNECTED(c2G4_dev_st->pb_dev_state.connected);
+  c2G4_dev_st->tx_done_s = tx_done_s;
+
+  if ( c2G4_dev_st->ongoing != Nothing_2G4 ) {
+    bs_trace_error_time_line("Tried to request a new tx while some other transaction was ongoing\n");
+  }
+
+  p2G4_dev_req_tx2v1_i(&c2G4_dev_st->pb_dev_state, tx_s, packet);
+
+  return p2G4_dev_get_tx_resp_nc(c2G4_dev_st);
+}
+
+/**
  * Provide the phy a new abort struct (during a Tx transaction)
  *
  * returns -1 on error, otherwise the response from the phy.
@@ -161,7 +187,35 @@ int p2G4_dev_req_cca_s_nc_b(p2G4_dev_state_nc_t *c2G4_dev_st, p2G4_cca_t *cca_s,
     bs_trace_error_time_line("Tried to request a new CCA while some other transaction was ongoing\n");
   }
 
-  p2G4_dev_req_cca_i(&c2G4_dev_st->pb_dev_state, cca_s);
+  pb_send_msg(c2G4_dev_st->pb_dev_state.ff_dtp, P2G4_MSG_CCA_MEAS,
+              (void *)cca_s, sizeof(p2G4_cca_t));
+
+  return p2G4_dev_get_cca_resp_nc(c2G4_dev_st);
+}
+
+/**
+ * Request a CCAv2 measurement to the phy
+ *
+ * cca_done_s needs to point to an allocated structure. Its content will be overwritten
+ *
+ * returns -1 on error, otherwise the response from the phy.
+ * Possible phy responses are:
+ *   * P2G4_MSG_CCA_END : (updates the cca_done_s)
+ *        The transaction has terminated, the device may start a new transaction
+ *   * P2G4_MSG_ABORTREEVAL
+ *        The device shall call p2G4_dev_provide_new_cca_abort_s_nc_b() with a new abort structure
+ */
+int p2G4_dev_req_ccav2_s_nc_b(p2G4_dev_state_nc_t *c2G4_dev_st, p2G4_ccav2_t *cca_s, p2G4_cca_done_t *cca_done_s) {
+
+  CHECK_CONNECTED(c2G4_dev_st->pb_dev_state.connected);
+  c2G4_dev_st->cca_done_s = cca_done_s;
+
+  if ( c2G4_dev_st->ongoing != Nothing_2G4 ) {
+    bs_trace_error_time_line("Tried to request a new CCA while some other transaction was ongoing\n");
+  }
+
+  pb_send_msg(c2G4_dev_st->pb_dev_state.ff_dtp, P2G4_MSG_CCAV2_MEAS,
+              (void *)cca_s, sizeof(p2G4_ccav2_t));
 
   return p2G4_dev_get_cca_resp_nc(c2G4_dev_st);
 }
@@ -404,17 +458,17 @@ int p2G4_dev_provide_new_rxv2_abort_s_nc_b(p2G4_dev_state_nc_t *p2G4_dev_state, 
 }
 
 /**
- * During a Rx abort reevaluation, request an immediate RSSI measurement
+ * During a Rx abort reevaluation, request an immediate RSSIv2 measurement
  *
  * returns -1 on error, 0 otherwise
  */
-int p2G4_dev_req_imm_RSSI_s_nc_b(p2G4_dev_state_nc_t *p2G4_dev_st, p2G4_rssi_t *RSSI_s, p2G4_rssi_done_t *RSSI_done_s) {
+int p2G4_dev_req_imm_RSSI_s_nc_b(p2G4_dev_state_nc_t *p2G4_dev_st, p2G4_rssiv2_t *RSSI_s, p2G4_rssi_done_t *RSSI_done_s) {
   CHECK_CONNECTED(p2G4_dev_st->pb_dev_state.connected);
-  if ( p2G4_dev_st->ongoing != Rx_Abort_Reeval_2G4 ) {
+  if (p2G4_dev_st->ongoing != Rx_Abort_Reeval_2G4) {
     bs_trace_error_time_line("Tried to send a new Rx RSSI immediate request but we are not in a Rx transaction abort reevaluation!\n");
   }
   pb_send_msg(p2G4_dev_st->pb_dev_state.ff_dtp,
-              P2G4_MSG_RERESP_IMMRSSI, (void *)RSSI_s,  sizeof(p2G4_rssi_t));
+              P2G4_MSG_RERESP_IMMRSSI, (void *)RSSI_s,  sizeof(p2G4_rssiv2_t));
   return p2G4_dev_get_rssi_resp_i(&p2G4_dev_st->pb_dev_state, RSSI_done_s);
 }
 
@@ -427,6 +481,18 @@ int p2G4_dev_req_RSSI_s_nc_b(p2G4_dev_state_nc_t *p2G4_dev_st, p2G4_rssi_t *RSSI
   CHECK_CONNECTED(p2G4_dev_st->pb_dev_state.connected);
   pb_send_msg(p2G4_dev_st->pb_dev_state.ff_dtp,
               P2G4_MSG_RSSIMEAS, (void *)RSSI_s, sizeof(p2G4_rssi_t));
+  return p2G4_dev_get_rssi_resp_i(&p2G4_dev_st->pb_dev_state, RSSI_done_s);
+}
+
+/**
+ * Request a RSSIv2 measurement from the Phy
+ *
+ * returns -1 if disconnected, 0 otherwise
+ */
+int p2G4_dev_req_RSSIv2_s_nc_b(p2G4_dev_state_nc_t *p2G4_dev_st, p2G4_rssiv2_t *RSSI_s, p2G4_rssi_done_t *RSSI_done_s){
+  CHECK_CONNECTED(p2G4_dev_st->pb_dev_state.connected);
+  pb_send_msg(p2G4_dev_st->pb_dev_state.ff_dtp,
+              P2G4_MSG_RSSIV2MEAS, (void *)RSSI_s, sizeof(p2G4_rssiv2_t));
   return p2G4_dev_get_rssi_resp_i(&p2G4_dev_st->pb_dev_state, RSSI_done_s);
 }
 
@@ -503,6 +569,47 @@ int p2G4_dev_req_rxv2_s_nc_b(p2G4_dev_state_nc_t *p2G4_dev_state, p2G4_rxv2_t *r
   ret = pb_dev_read(&p2G4_dev_state->pb_dev_state, &header, sizeof(header));
   if (ret==-1)
     return -1;
+
+  return c2G4_handle_rxv2_responses_s_nc(p2G4_dev_state, header);
+}
+
+/**
+ * Request a reception (v2.1) to the phy
+ *
+ * rx_buf is a pointer to a buffer in which the packet will be copied.
+ * The buffer shall have buf_size bytes.
+ * If buf_size is 0, this function will allocate a new buffer and point
+ *  *RxBuf to it (the application must free it afterwards).
+ * Otherwise this function will fail if the buffer is to small to read the
+ * incoming packet
+ *
+ * returns -1 on error, the received response header >=0 otherwise
+ */
+int p2G4_dev_req_rx2v1_s_nc_b(p2G4_dev_state_nc_t *p2G4_dev_state, p2G4_rx2v1_t *rx_s, p2G4_address_t *phy_addr, p2G4_rxv2_done_t *rx_done_s, uint8_t **rx_buf, size_t buf_size) {
+  CHECK_CONNECTED(p2G4_dev_state->pb_dev_state.connected);
+
+  if ( p2G4_dev_state->ongoing != Nothing_2G4 ) {
+    bs_trace_error_time_line("Tried to request a new Rx while another transaction was ongoing\n");
+  }
+
+  pb_send_msg(p2G4_dev_state->pb_dev_state.ff_dtp, P2G4_MSG_RX2V1,
+              (void *)rx_s, sizeof(p2G4_rx2v1_t));
+  if (rx_s->n_addr > 0) {
+    write(p2G4_dev_state->pb_dev_state.ff_dtp, phy_addr, sizeof(p2G4_address_t)*rx_s->n_addr);
+  }
+
+  p2G4_dev_state->bufsize = buf_size;
+  p2G4_dev_state->rxbuf   = rx_buf;
+  p2G4_dev_state->rxv2_done_s = rx_done_s;
+  p2G4_dev_state->WeGotAddress = false;
+
+  pc_header_t header;
+  int ret;
+
+  ret = pb_dev_read(&p2G4_dev_state->pb_dev_state, &header, sizeof(header));
+  if (ret==-1) {
+    return -1;
+  }
 
   return c2G4_handle_rxv2_responses_s_nc(p2G4_dev_state, header);
 }

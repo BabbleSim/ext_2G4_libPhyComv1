@@ -25,6 +25,12 @@ void p2G4_dev_req_txv2_i(pb_dev_state_t *pb_dev_state, p2G4_txv2_t *s,
   pb_send_payload(pb_dev_state->ff_dtp, buf, s->packet_size);
 }
 
+void p2G4_dev_req_tx2v1_i(pb_dev_state_t *pb_dev_state, p2G4_tx2v1_t *s, uint8_t *buf)
+{
+  pb_send_msg(pb_dev_state->ff_dtp, P2G4_MSG_TX2V1, (void *)s, sizeof(p2G4_tx2v1_t));
+  pb_send_payload(pb_dev_state->ff_dtp, buf, s->packet_size);
+}
+
 int p2G4_dev_handle_tx_resp_i(pb_dev_state_t *pb_dev_state, pc_header_t header,
                               p2G4_tx_done_t *tx_done_s)
 {
@@ -42,11 +48,6 @@ int p2G4_dev_handle_tx_resp_i(pb_dev_state_t *pb_dev_state, pc_header_t header,
     INVALID_RESP(header);
     return -1;
   }
-}
-
-void p2G4_dev_req_cca_i(pb_dev_state_t *pb_dev_state, p2G4_cca_t *s)
-{
-  pb_send_msg(pb_dev_state->ff_dtp, P2G4_MSG_CCA_MEAS, (void *)s, sizeof(p2G4_cca_t));
 }
 
 int p2G4_dev_get_tx_resp_i(pb_dev_state_t *pb_dev_state,

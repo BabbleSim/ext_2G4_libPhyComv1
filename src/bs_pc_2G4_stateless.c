@@ -121,6 +121,26 @@ int p2G4_dev_req_txv2_s_c_b(p2G4_dev_state_s_t *p2G4_dev_state, p2G4_txv2_t *tx_
  * Request a transmissions to the phy
  *
  * returns -1 on error, 0 otherwise
+ */
+int p2G4_dev_req_tx2v1_s_c_b(p2G4_dev_state_s_t *p2G4_dev_state, p2G4_tx2v1_t *tx_s, uint8_t *packet, p2G4_tx_done_t *tx_done_s)
+{
+  CHECK_CONNECTED(p2G4_dev_state->pb_dev_state.connected);
+  int ret;
+  pc_header_t header;
+
+  p2G4_dev_req_tx2v1_i(&p2G4_dev_state->pb_dev_state, tx_s, packet);
+
+  header = get_resp_while_handling_abortreeval_s(p2G4_dev_state, &tx_s->abort);
+
+  ret = p2G4_dev_handle_tx_resp_i(&p2G4_dev_state->pb_dev_state, header,
+                                  tx_done_s);
+  return ret;
+}
+
+/**
+ * Request a transmissions to the phy
+ *
+ * returns -1 on error, 0 otherwise
  *
  * It does not wait for a response, p2G4_dev_pick_txresp_s_c_b() should be called after
  */
@@ -314,6 +334,86 @@ int p2G4_dev_req_rxv2_s_c_b(p2G4_dev_state_s_t *p2G4_dev_state, p2G4_rxv2_t *rx_
 }
 
 /**
+ * Request a (v2.1) reception to the phy
+ *
+ * rx_done_s needs to be allocated by the caller
+ *
+ * rx_buf is a pointer to a buffer in which the packet will be copied.
+ * This buffer shall have buf_size bytes.
+ * If buf_size is 0, this function will allocate a new buffer and point
+ *  *rx_buf to it (the application must free it afterwards).
+ * Otherwise this function will fail if the buffer is too small to fit
+ * the incoming packet
+ *
+ * dev_rxeval_f is a function which will be called when receiving the packet.
+ * If the device will accept any packet (quite normal behavior), set this to
+ * NULL.
+ * dev_rxeval_f() shall return 1, if it accepts the packet, 0 otherwise
+ *
+ * returns -1 on error, the received response header >=0 otherwise
+ */
+int p2G4_dev_req_rx2v1_s_c_b(p2G4_dev_state_s_t *p2G4_dev_state, p2G4_rx2v1_t *rx_s,
+                             p2G4_address_t *phy_addr,
+                             p2G4_rxv2_done_t *rx_done_s, uint8_t **rx_buf,
+                             size_t buf_size, device_eval_rxv2_f dev_rxeval_f) {
+
+  CHECK_CONNECTED(p2G4_dev_state->pb_dev_state.connected);
+
+  pb_send_msg(p2G4_dev_state->pb_dev_state.ff_dtp,
+              P2G4_MSG_RX2V1, (void *)rx_s, sizeof(p2G4_rx2v1_t));
+  if (rx_s->n_addr > 0) {
+    write(p2G4_dev_state->pb_dev_state.ff_dtp, phy_addr, sizeof(p2G4_address_t)*rx_s->n_addr);
+  }
+
+  pc_header_t r_header;
+  r_header = get_resp_while_handling_abortreeval_s(p2G4_dev_state, &rx_s->abort);
+
+  if (r_header == P2G4_MSG_RXV2_ADDRESSFOUND) {
+    int ret;
+
+    ret = pb_dev_read(&p2G4_dev_state->pb_dev_state,
+                      rx_done_s, sizeof(p2G4_rxv2_done_t));
+    if (ret == -1)
+      return -1;
+
+    ret = p2G4_rx_pick_packet(&p2G4_dev_state->pb_dev_state,
+                              rx_done_s->packet_size, rx_buf, buf_size);
+    if (ret)
+      return ret;
+
+    int accept_packet = true;
+    if (dev_rxeval_f != NULL) {
+      accept_packet = dev_rxeval_f(rx_done_s, *rx_buf);
+    }
+    pc_header_t header;
+    if (accept_packet == true) {
+      header = P2G4_MSG_RXCONT;
+    } else {
+      header = P2G4_MSG_RXSTOP;
+    }
+    write(p2G4_dev_state->pb_dev_state.ff_dtp, &header, sizeof(header));
+
+    if (accept_packet != true) {
+      return r_header;
+    }
+
+    r_header = get_resp_while_handling_abortreeval_s(p2G4_dev_state, &rx_s->abort);
+  }
+
+  if (r_header == PB_MSG_DISCONNECT) {
+    pb_dev_clean_up(&p2G4_dev_state->pb_dev_state);
+    return -1;
+  } else if (r_header == P2G4_MSG_RXV2_END) {
+    if (pb_dev_read(&p2G4_dev_state->pb_dev_state, rx_done_s, sizeof(p2G4_rxv2_done_t)) == -1) {
+      return -1;
+    }
+  } else {
+    INVALID_RESP(r_header);
+  }
+  return r_header;
+}
+
+/**
  * Request a RSSI measurement to the phy
  * RSSI_done_s needs to be allocated by the caller
  *
@@ -329,6 +429,21 @@ int p2G4_dev_req_RSSI_s_c_b(p2G4_dev_state_s_t *p2G4_dev_state,
 }
 
 /**
+ * Request a RSSIv2 measurement to the phy
+ * RSSI_done_s needs to be allocated by the caller
+ *
+ * returns -1 if disconnected, 0 otherwise
+ */
+int p2G4_dev_req_RSSIv2_s_c_b(p2G4_dev_state_s_t *p2G4_dev_state,
+                              p2G4_rssiv2_t *RSSI_s, p2G4_rssi_done_t *RSSI_done_s)
+{
+  CHECK_CONNECTED(p2G4_dev_state->pb_dev_state.connected);
+  pb_send_msg(p2G4_dev_state->pb_dev_state.ff_dtp,
+              P2G4_MSG_RSSIV2MEAS, (void *)RSSI_s, sizeof(p2G4_rssiv2_t));
+  return p2G4_dev_get_rssi_resp_i(&p2G4_dev_state->pb_dev_state, RSSI_done_s);
+}
+
+/**
  * Request a CCA measurement to the phy
  * cca_done_s needs to be allocated by the caller
  *
@@ -337,7 +452,24 @@ int p2G4_dev_req_RSSI_s_c_b(p2G4_dev_state_s_t *p2G4_dev_state,
 int p2G4_dev_req_cca_s_c_b(p2G4_dev_state_s_t *p2G4_dev_state, p2G4_cca_t *cca_s, p2G4_cca_done_t *cca_done_s)
 {
   CHECK_CONNECTED(p2G4_dev_state->pb_dev_state.connected);
-  p2G4_dev_req_cca_i(&p2G4_dev_state->pb_dev_state, cca_s);
+  pb_send_msg(p2G4_dev_state->pb_dev_state.ff_dtp, P2G4_MSG_CCA_MEAS, (void *)cca_s, sizeof(p2G4_cca_t));
+
+  pc_header_t r_header;
+  r_header = get_resp_while_handling_abortreeval_s(p2G4_dev_state, &cca_s->abort);
+
+  return p2G4_dev_handle_cca_resp_i(&p2G4_dev_state->pb_dev_state, r_header, cca_done_s);
+}
+
+/**
+ * Request a CCAv2 measurement to the phy
+ * cca_done_s needs to be allocated by the caller
+ *
+ * returns -1 if disconnected, 0 otherwise
+ */
+int p2G4_dev_req_ccav2_s_c_b(p2G4_dev_state_s_t *p2G4_dev_state, p2G4_ccav2_t *cca_s, p2G4_cca_done_t *cca_done_s)
+{
+  CHECK_CONNECTED(p2G4_dev_state->pb_dev_state.connected);
+  pb_send_msg(p2G4_dev_state->pb_dev_state.ff_dtp, P2G4_MSG_CCAV2_MEAS, (void *)cca_s, sizeof(p2G4_ccav2_t));
 
   pc_header_t r_header;
   r_header = get_resp_while_handling_abortreeval_s(p2G4_dev_state, &cca_s->abort);
