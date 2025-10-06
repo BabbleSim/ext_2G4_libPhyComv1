@@ -168,7 +168,25 @@ double p2G4_freq_to_d(p2G4_freq_t freq){
 }
 
 /**
+ * Convert a p2G4_freq2_t frequency into a double
+ *
+ * Note that the frequency is returned in MHz as an absolute value
+ */
+double p2G4_freq2_to_d(p2G4_freq2_t freq) {
+  return ((double)freq) / (1 << P2G4_freq2_FRACB);
+}
+
+/**
+ * Convert a p2G4_freq_t frequency into p2G4_freq2_t format
+ */
+p2G4_freq2_t p2G4_freq_to_freq2(p2G4_freq_t freq) {
+  p2G4_freq2_t f_abs = (int32_t)freq + ((int32_t)2400 << P2G4_freq_FRACB);
+  return f_abs * (1 << (P2G4_freq2_FRACB - P2G4_freq_FRACB));
+}
+
+/**
  * Convert a frequency in double float to p2G4_freq_t
+ * <center_freq> should be provided in MHz
  *
  * If prevent_OOB is set, frequencies out of the 2400..2480MHz band wont be allowed
  */
@@ -181,8 +199,9 @@ int p2G4_freq_from_d(double center_freq, int prevent_OOB, p2G4_freq_t *result){
   }
   //We expect MHz
 
-  if ( ( center_freq >= 2400-128 ) && ( center_freq <= 2400+128 ) ) //we offset it down to 0 = 2400MHz
+  if ((center_freq >= 2400-128) && (center_freq <= 2400+128)) { //we offset it down to 0 = 2400MHz
     center_freq = center_freq - 2400;
+  }
   //it could have been provided directly as an offset relative to 2400MHz and we would accept it
 
   if ( ( center_freq >= 127 ) || ( center_freq <= -127 ) ) {
@@ -198,4 +217,18 @@ int p2G4_freq_from_d(double center_freq, int prevent_OOB, p2G4_freq_t *result){
 
   *result = (p2G4_freq_t)(center_freq+0.5);
   return 0;
+}
+
+/**
+ * Convert a frequency in double float to p2G4_freq2_t
+ * The input center_freq is expected in MHz as an absolute value. i.e. 2450MHz should be provided as 2450.
+ */
+p2G4_freq2_t p2G4_freq2_from_d(double center_freq) {
+  if ((center_freq >= UINT16_MAX) || (center_freq < 0)) {
+    bs_trace_error_line("center_frequency seems to be out of range (%e; range = 0..65535MHz)\n", center_freq);
+  }
+
+  center_freq *= (1 << P2G4_freq2_FRACB);
+
+  return (p2G4_freq2_t)(center_freq+0.5);
 }

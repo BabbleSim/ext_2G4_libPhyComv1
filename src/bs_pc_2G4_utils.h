@@ -22,7 +22,10 @@ typedef enum {Mod_None, OnlyReceivable, OnlyNonReceivable} p2G4_mod_limits_t;
 int p2G4_modulation_from_string(const char* name, p2G4_modulation_t *modulation, p2G4_mod_limits_t limit, int verb);
 
 double p2G4_freq_to_d(p2G4_freq_t freq);
+double p2G4_freq2_to_d(p2G4_freq2_t freq);
 int p2G4_freq_from_d(double center_freq, int prevent_OOB, p2G4_freq_t *result);
+p2G4_freq2_t p2G4_freq2_from_d(double center_freq);
+p2G4_freq2_t p2G4_freq_to_freq2(p2G4_freq_t freq);
 p2G4_freq_t p2G4_center_freq_from_ble_ch_nbr(uint channel_idx);
 
 p2G4_power_t p2G4_power_from_d(double power);
