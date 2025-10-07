@@ -22,6 +22,7 @@ extern "C"{
 typedef int16_t  p2G4_freq_t;
 #define P2G4_freq_FRACB 8
 #define P2G4_INVALID_FREQ 0x7FFF
+#define P2G4_freq_STARTF 2400
 
 /*
  * Absolute frequency in MHz from 0MHz to 65536MHz - 2/2^16
