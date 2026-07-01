@@ -58,7 +58,7 @@ p2G4_freq_t p2G4_center_freq_from_ble_ch_nbr(uint ch_idx){
       freq = 2402;
     } else if (ch_idx == 38) {
       freq = 2426;
-    } else if (ch_idx == 39) {
+    } else /* if (ch_idx == 39) */ {
       freq = 2480;
     }
   }
